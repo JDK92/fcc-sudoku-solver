@@ -9,19 +9,16 @@ module.exports = function (app) {
   app.route('/api/check')
     .post((req, res) => {
       const { puzzle, coordinate, value } = req.body;
-
+     
       if (!puzzle || !coordinate || !value) {
         return res.json({ error: "Required field(s) missing" });
       }
       
-      const [ row, col ] = coordinate;
-
-      const conflict    = [];
-      const checkPuzzle = solver.validate(puzzle);
-      const checkCoord  = solver.checkCoordinate(coordinate);
-      const checkValue  = solver.checkValue(value);
-
-      console.log({checkValue});
+      const [ row, col ]  = coordinate;
+      const checkPuzzle   = solver.validate(puzzle);
+      const checkCoord    = solver.checkCoordinate(coordinate);
+      const checkValue    = solver.checkValue(value);
+      const checkConflict = solver.checkConflicts(puzzle, row, col, value);
 
       if (!checkPuzzle.isValid) {
         return res.json({ error: checkPuzzle.error })
@@ -35,27 +32,28 @@ module.exports = function (app) {
         return res.json({ error: "Invalid value" });
       }
 
-      if (!solver.checkRowPlacement(puzzle, row, col, value)) {
-        conflict.push("row");
-      }
+      return res.json(checkConflict);
 
-      if (!solver.checkColPlacement(puzzle, row, col, value)) {
-        conflict.push("column");
-      }
-
-      if (!solver.checkRegionPlacement(puzzle, row, col, value)) {
-        conflict.push("region");
-      }
-
-      if (conflict.length > 0) {
-        return res.json({ valid: false, conflict });
-      } else {
-        return res.json({ valid: true });
-      }
     });
     
   app.route('/api/solve')
     .post((req, res) => {
-     
+      const { puzzle }  = req.body;
+      const checkPuzzle = solver.validate(puzzle);
+      
+      if (!req.body.puzzle) {
+        return res.json({ error: "Required field missing" });
+      }
+
+      if (!checkPuzzle.isValid) {
+        return res.json({ error: checkPuzzle.error });
+      }
+
+      console.log("All good");
+
+      solver.solve(puzzle);
+
+      return res.json({solution: "..9..5.1.85.4....2432......1...69.83.9.....6.62.71...9......1945....4.37.4.3..6.."});
+
     });
 };
