@@ -51,9 +51,9 @@ module.exports = function (app) {
 
       console.log("All good");
 
-      solver.solve(puzzle);
+      const answer = solver.solve(puzzle);
 
-      return res.json({solution: puzzle});
+      return res.json(answer);
 
     });
 };

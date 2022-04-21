@@ -120,80 +120,84 @@ class SudokuSolver {
   }
 
   solve(puzzleString) {
-    console.clear();
-
-    // Define rows, cols and regions
-    const rows = [];
-    const cols = [];
-    const matr = [];
-    const answ = [];
+    
+    // Starting point
+    let splitPuzzle = puzzleString.split("");
+    let checkSpaces = splitPuzzle.includes(".");
 
     // Define starting indexes for rows, cols and regions
-    const ri = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    const ci = ri.map(el => el * 9);
-    const mi = ri.slice(0, 3).map(el => [el * 9, el * 9 + 1, el * 9 + 2]).flat();
+    const rowIndex = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    const colIndex = rowIndex.map(el => el * 9);
+    const regIndex = rowIndex.slice(0, 3).map(el => [el * 9, el * 9 + 1, el * 9 + 2]).flat();
 
-
-    // Fetch row & col values
-    for (let i = 0; i < 9; i++) {
-      let currentRow = ri.map(r => (i * 9) + r);
-      rows.push(currentRow.reduce((prev, curr) => { return prev + puzzleString[curr] }, ""));
-
-      let currentCol = ci.map(c => c + i);
-      cols.push(currentCol.reduce((prev, curr) => { return prev + puzzleString[curr] }, ""));
-
-      let currentReg = mi.map(m => (Math.floor(i / 3) * 18) + (i * 3) + m);
-      matr.push(currentReg.reduce((prev, curr) => { return prev + puzzleString[curr] }, ""));
-    }
-
-
-    // Calculate answer
-    let value = 1;
-
+    // Sudoku resolver
     do {
-      matr.forEach((m, mi) => { 
-        let options = 0;
 
-        if (!m.includes(value)) {
+      // Check for spaces ==> "."
+      checkSpaces = splitPuzzle.includes(".");
+
+      // Define rows, cols and regions
+      const rows    = [];
+      const cols    = [];
+      const regions = [];
+      const answers = [];
+
+      // Fetch row & col values
+      for (let i = 0; i < 9; i++) {
+        let row = rowIndex.map(r => (i * 9) + r);
+        rows.push(row.reduce((prev, curr) => { return prev + splitPuzzle[curr] }, ""));
+      
+        let col = colIndex.map(c => c + i);
+        cols.push(col.reduce((prev, curr) => { return prev + splitPuzzle[curr] }, ""));
+      
+        let reg = regIndex.map(m => (Math.floor(i / 3) * 18) + (i * 3) + m);
+        regions.push(reg.reduce((prev, curr) => { return prev + splitPuzzle[curr] }, ""));
+      }
+
+      // Calculate answer
+      for (let value = 1; value <= 9; value++) {
+        
+        regions.forEach((reg, regIndex) => {
+          if (reg.includes(value)) return;
 
           const possibleAnswers = [];
-
-  
+          
           for (let i = 0; i < 3; i++) {
-            const currentRow = rows[Math.floor(mi / 3) * 3 + i];
+            
+            const currentRow = rows[Math.floor(regIndex / 3) * 3 + i];
             
             if (currentRow.includes(value)) continue;
-      
+
             for (let j = 0; j < 3; j++) {
-              const currentCol = cols[(mi % 3) * 3 + j];
-              
+
+              const currentCol = cols[(regIndex % 3) * 3 + j];
+
               if (currentCol.includes(value)) continue;
-              
+
               const position = (i * 3) + j;
-  
-              if (!parseInt(m[position])) {
-                options++;
-                possibleAnswers.push({m, value, position});
+
+              if (!parseInt(reg[position])) {
+                possibleAnswers.push({
+                  validValue: value,
+                  stringPos: ((Math.floor(regIndex / 3) * 3 + i) * 9) + (((regIndex % 3) * 3) + j)
+                });
               }
             }
-            
+
+            answers.push(possibleAnswers);
           }
-          
-          answ.push(possibleAnswers);
-        }
-  
-      });
+        });
+      }
 
-      value++;
+      const uniqueAnswers = answers.filter(el => el.length == 1).flat();
 
-    } while (value < 9);
+      if (uniqueAnswers.length == 0) break;
 
-    const uniqueAnswer = answ.filter(el => el.length === 1);
+      uniqueAnswers.forEach(ans => splitPuzzle[ans.stringPos] = `${ans.validValue}`);
+      
+    } while (checkSpaces)
 
-    console.log(uniqueAnswer);
-
-
-
+    return (!checkSpaces) ? { solution: splitPuzzle.join("") } : { error: "Puzzle cannot be solved" };
   }
 }
 
