@@ -104,11 +104,6 @@ class SudokuSolver {
   }
 
   solve(puzzleString) {
-    // Validate puzzle
-    const { isValid, error } = this.validate(puzzleString);
-
-    if (!isValid) return error;
-
     // Starting point
     const splitPuzzle = puzzleString.split("");
     const rowsIndexes = [];
